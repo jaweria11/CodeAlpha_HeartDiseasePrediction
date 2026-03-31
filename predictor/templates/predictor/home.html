@@ -1,0 +1,267 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>CardioGuard | AI Heart Risk Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+/* Basic Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f2f5fc;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    position: relative;
+}
+
+/* Background Effects */
+body::before {
+    content: "";
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left:0;
+    background: radial-gradient(circle at 10% 20%, rgba(79,114,139,0.08) 0%, rgba(222,233,245,0.2) 90%);
+    pointer-events: none; z-index: 0;
+}
+body::after {
+    content: "";
+    position: absolute;
+    width:100%; height:100%;
+    top:0; left:0;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1500" opacity="0.15"><path fill="none" stroke="%234f728b" stroke-width="1.5" d="M0 800 L2000 800 M400 0 L400 1500 M800 0 L800 1500 M1200 0 L1200 1500 M1600 0 L1600 1500 M0 400 L2000 400 M0 1200 L2000 1200"/><circle cx="400" cy="400" r="8" fill="%233282b8"/><circle cx="1200" cy="800" r="8" fill="%233282b8"/><circle cx="1600" cy="1100" r="6" fill="%234f728b"/></svg>');
+    background-repeat: repeat; opacity:0.2; pointer-events:none; z-index:0;
+}
+
+/* Card Container */
+.prediction-card {
+    max-width: 780px; width:100%;
+    background: rgba(255,255,255,0.96);
+    border-radius: 2rem;
+    box-shadow: 0 25px 45px -12px rgba(0,0,0,0.25),0 4px 12px rgba(0,0,0,0.05);
+    position: relative; z-index:2; overflow:hidden; border:1px solid rgba(255,255,255,0.5);
+}
+.prediction-card::before {
+    content:''; position:absolute; top:0; left:0; width:100%; height:6px;
+    background: linear-gradient(90deg, #2c7da0, #61a5c2, #2c7da0);
+    z-index:1;
+}
+
+/* Header */
+.card-header { padding: 1.8rem 2rem 0.8rem 2rem; text-align:center; border-bottom:1px solid rgba(0,0,0,0.05);}
+.header-badge { display:inline-flex; align-items:center; justify-content:center; background:#eef2fc; border-radius:60px; padding:0.3rem 1rem; margin-bottom:1rem; font-size:0.75rem; font-weight:600; letter-spacing:0.3px; color:#1f5e7e; gap:8px;}
+.header-badge i { font-size:0.85rem; }
+.card-header h1 {
+    font-size:1.9rem; font-weight:700; background:linear-gradient(135deg,#1f4e6e,#2c7da0);
+    background-clip:text; -webkit-background-clip:text; color:transparent; letter-spacing:-0.5px;
+    display:inline-flex; align-items:center; gap:12px; justify-content:center;
+}
+.card-header p { color:#5c6f87; font-size:0.9rem; font-weight:400; margin-top:6px; }
+
+/* Form */
+.form-container { padding:1.5rem 2rem 2rem 2rem; }
+.form-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem 1.5rem; }
+.input-group { display:flex; flex-direction:column; gap:0.4rem; }
+.input-group label { font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#2c3e50; display:flex; align-items:center; gap:6px;}
+.input-group label i { color:#61a5c2; font-size:0.7rem; width:18px; }
+.input-group input {
+    background:#f9fbfe; border:1px solid #e2e8f0; border-radius:1rem; padding:0.8rem 1rem;
+    font-size:0.9rem; font-family:'Inter', monospace; font-weight:500; color:#1a2c3e;
+    transition: all 0.2s ease; outline:none; width:100%;
+}
+.input-group input:focus { border-color:#2c7da0; box-shadow:0 0 0 3px rgba(44,125,160,0.2); background:white; }
+.input-group input::placeholder { color:#b9c3d4; font-weight:400; font-size:0.8rem; }
+.hint-text { font-size:0.65rem; color:#7d8eaa; margin-top:4px; margin-left:6px; }
+
+/* Button */
+.button-wrapper { grid-column:span 2; margin-top:1.5rem; text-align:center;}
+.predict-btn {
+    background: linear-gradient(95deg, #1f5e7e,#2c7da0); border:none; padding:0.9rem 1.5rem; width:100%;
+    border-radius:3rem; font-weight:700; font-size:1rem; color:white; cursor:pointer; display:inline-flex;
+    align-items:center; justify-content:center; gap:10px; box-shadow:0 8px 20px -8px rgba(31,94,126,0.4); transition:all 0.25s ease;
+}
+.predict-btn i { font-size:1rem; transition: transform 0.2s; }
+.predict-btn:hover { background: linear-gradient(95deg,#154b67,#236b8e); transform:translateY(-2px); box-shadow:0 14px 26px -10px rgba(31,94,126,0.5); }
+.predict-btn:hover i { transform:translateX(4px); }
+
+/* Result Card */
+.result-panel { margin:0 2rem 2rem 2rem; padding:0.1rem 0; border-radius:1.5rem; transition:all 0.3s; }
+.result-card { background:#ffffff; border-radius:1.5rem; padding:1rem 1.5rem; text-align:center; border:1px solid rgba(0,0,0,0.05);
+    box-shadow:0 4px 14px rgba(0,0,0,0.02); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;}
+.result-message { font-size:1.1rem; font-weight:600; display:flex; align-items:center; gap:12px; flex:2;}
+.result-message i { font-size:1.8rem;}
+.result-badge { padding:0.4rem 1.2rem; border-radius:40px; font-weight:700; font-size:0.85rem; letter-spacing:0.5px; background:#eef2fa;}
+.success-style { background:#e3f7ec; border-left:4px solid #2c8c5a; }
+.danger-style { background:#fff4f0; border-left:4px solid #d9534f; }
+.result-message .low-risk { color:#1f7840; }
+.result-message .high-risk { color:#c23d2e; }
+
+/* Animation */
+@keyframes fadeSlide { 0%{opacity:0; transform:translateY(12px);} 100%{opacity:1; transform:translateY(0);} }
+.animate-result { animation: fadeSlide 0.4s cubic-bezier(0.2,0.9,0.4,1.1); }
+
+/* Responsive */
+@media (max-width:640px) {
+    .form-grid { grid-template-columns:1fr; gap:0.9rem; }
+    .button-wrapper { grid-column: span 1; }
+    .card-header h1 { font-size:1.6rem; }
+    .form-container { padding:1rem 1.5rem 1.5rem; }
+    .result-panel { margin:0 1.5rem 1.8rem 1.5rem; }
+    .result-card { flex-direction:column; align-items:flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="prediction-card">
+    <div class="card-header">
+        <div class="header-badge"><i class="fas fa-heartbeat"></i> AI-PREVENTIVE CARDIAC ANALYSIS</div>
+        <h1><i class="fas fa-charging-station" style="color:#2c7da0;"></i> CardioGuard</h1>
+        <p>Evidence-based risk assessment — 13 clinical parameters</p>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" id="heartForm">{% csrf_token %}
+            <div class="form-grid">
+
+                <!-- Age -->
+                <div class="input-group">
+                    <label><i class="fas fa-calendar-alt"></i> Age</label>
+                    <input type="number" name="age" min="1" max="120" step="1" placeholder="e.g., 52" value="{{ request.POST.age|default_if_none:'' }}">
+                    <div class="hint-text">years</div>
+                </div>
+
+                <!-- Sex -->
+                <div class="input-group">
+                    <label><i class="fas fa-venus-mars"></i> Sex</label>
+                    <input type="number" name="sex" min="0" max="1" step="1" placeholder="0 = Female, 1 = Male" value="{{ request.POST.sex|default_if_none:'' }}">
+                    <div class="hint-text">0 / 1</div>
+                </div>
+
+                <!-- Chest Pain -->
+                <div class="input-group">
+                    <label><i class="fas fa-lungs"></i> Chest Pain (cp)</label>
+                    <input type="number" name="cp" min="0" max="3" step="1" placeholder="0–3" value="{{ request.POST.cp|default_if_none:'' }}">
+                    <div class="hint-text">0=typical angina ... 3=asymptomatic</div>
+                </div>
+
+                <!-- Rest BP -->
+                <div class="input-group">
+                    <label><i class="fas fa-tachometer-alt"></i> Resting BP</label>
+                    <input type="number" name="trestbps" min="50" max="250" step="1" placeholder="mm Hg" value="{{ request.POST.trestbps|default_if_none:'' }}">
+                    <div class="hint-text">resting blood pressure</div>
+                </div>
+
+                <!-- Cholesterol -->
+                <div class="input-group">
+                    <label><i class="fas fa-oil-can"></i> Cholesterol</label>
+                    <input type="number" name="chol" min="100" max="600" step="1" placeholder="mg/dl" value="{{ request.POST.chol|default_if_none:'' }}">
+                    <div class="hint-text">serum cholestoral</div>
+                </div>
+
+                <!-- FBS -->
+                <div class="input-group">
+                    <label><i class="fas fa-tint"></i> Fasting Blood Sugar</label>
+                    <input type="number" name="fbs" min="0" max="1" step="1" placeholder="0 / 1" value="{{ request.POST.fbs|default_if_none:'' }}">
+                    <div class="hint-text">>120 mg/dl → 1</div>
+                </div>
+
+                <!-- Rest ECG -->
+                <div class="input-group">
+                    <label><i class="fas fa-heart"></i> Rest ECG</label>
+                    <input type="number" name="restecg" min="0" max="2" step="1" placeholder="0–2" value="{{ request.POST.restecg|default_if_none:'' }}">
+                    <div class="hint-text">0=normal, 1=ST-T, 2=LVH</div>
+                </div>
+
+                <!-- Max Heart Rate -->
+                <div class="input-group">
+                    <label><i class="fas fa-running"></i> Max Heart Rate</label>
+                    <input type="number" name="thalach" min="60" max="250" step="1" placeholder="bpm" value="{{ request.POST.thalach|default_if_none:'' }}">
+                    <div class="hint-text">maximum achieved</div>
+                </div>
+
+                <!-- Exercise Angina -->
+                <div class="input-group">
+                    <label><i class="fas fa-dumbbell"></i> Exercise Angina</label>
+                    <input type="number" name="exang" min="0" max="1" step="1" placeholder="0 / 1" value="{{ request.POST.exang|default_if_none:'' }}">
+                    <div class="hint-text">1 = yes</div>
+                </div>
+
+                <!-- Oldpeak -->
+                <div class="input-group">
+                    <label><i class="fas fa-chart-line"></i> Oldpeak</label>
+                    <input type="number" name="oldpeak" step="0.1" min="0" max="10" placeholder="ST depression" value="{{ request.POST.oldpeak|default_if_none:'' }}">
+                    <div class="hint-text">relative to rest</div>
+                </div>
+
+                <!-- Slope -->
+                <div class="input-group">
+                    <label><i class="fas fa-mountain"></i> Slope</label>
+                    <input type="number" name="slope" min="0" max="2" step="1" placeholder="0–2" value="{{ request.POST.slope|default_if_none:'' }}">
+                    <div class="hint-text">peak exercise ST slope</div>
+                </div>
+
+                <!-- CA -->
+                <div class="input-group">
+                    <label><i class="fas fa-microscope"></i> CA (major vessels)</label>
+                    <input type="number" name="ca" min="0" max="3" step="1" placeholder="0–3" value="{{ request.POST.ca|default_if_none:'' }}">
+                    <div class="hint-text">fluoroscopy colored</div>
+                </div>
+
+                <!-- Thal -->
+                <div class="input-group">
+                    <label><i class="fas fa-dna"></i> Thalassemia</label>
+                    <input type="number" name="thal" min="1" max="3" step="1" placeholder="1–3" value="{{ request.POST.thal|default_if_none:'' }}">
+                    <div class="hint-text">1=normal,2=fixed,3=reversible</div>
+                </div>
+
+            </div>
+
+            <div class="button-wrapper">
+                <button type="submit" class="predict-btn"><i class="fas fa-microchip"></i> Analyze Risk Profile <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </form>
+    </div>
+
+    {% if prediction is not None %}
+    <div class="result-panel animate-result" id="resultSection">
+        <div class="result-card {% if 'No' in prediction or 'Low' in prediction or 'low' in prediction %}success-style{% else %}danger-style{% endif %}">
+            <div class="result-message">
+                {% if 'No' in prediction or 'low' in prediction or 'Low' in prediction or 'Absence' in prediction %}
+                    <i class="fas fa-check-circle" style="color:#2c8c5a;"></i>
+                    <span class="low-risk">✨ {{ prediction }}</span>
+                {% else %}
+                    <i class="fas fa-exclamation-triangle" style="color:#d9534f;"></i>
+                    <span class="high-risk">⚠️ {{ prediction }}</span>
+                {% endif %}
+            </div>
+            <div class="result-badge">
+                {% if 'No' in prediction or 'low' in prediction %}<i class="fas fa-leaf"></i> LOW RISK{% else %}<i class="fas fa-heart-broken"></i> ATTENTION{% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <footer><small><i class="fas fa-chart-simple"></i> Based on Cleveland dataset • 13 clinical indicators • always consult a specialist</small></footer>
+</div>
+
+<script>
+(function(){
+    const form = document.getElementById('heartForm');
+    if(form){
+        form.addEventListener('submit', function(){
+            const btn = document.querySelector('.predict-btn');
+            if(btn){ btn.innerHTML='<i class="fas fa-spinner fa-pulse"></i> Computing risk...'; }
+        });
+    }
+})();
+</script>
+
+</body>
+</html>
